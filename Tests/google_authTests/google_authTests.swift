@@ -136,7 +136,7 @@ struct AccountItemTests {
         )
         let formatted = account.formattedCode()
         #expect(formatted.count == 7) // 6 digits + 1 space
-        #expect(formatted.contains(" "))
+        #expect(formatted.contains("\u{00A0}") || formatted.contains(" "))
     }
 }
 

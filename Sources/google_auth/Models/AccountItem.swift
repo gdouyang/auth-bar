@@ -85,11 +85,11 @@ public struct AccountItem: Identifiable, Codable, Equatable, Sendable {
         if raw.count == 6 {
             let prefix = raw.prefix(3)
             let suffix = raw.suffix(3)
-            return "\(prefix) \(suffix)"
+            return "\(prefix)\u{00A0}\(suffix)"
         } else if raw.count == 8 {
             let prefix = raw.prefix(4)
             let suffix = raw.suffix(4)
-            return "\(prefix) \(suffix)"
+            return "\(prefix)\u{00A0}\(suffix)"
         }
         return raw
     }

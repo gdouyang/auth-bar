@@ -78,14 +78,18 @@ public struct AccountRowView: View {
                     Text(account.formattedCode())
                         .font(.system(size: 20, weight: .bold, design: .monospaced))
                         .foregroundColor(codeColor)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                         .textSelection(.enabled)
 
                     if accountManager.settings.showNextCodePreview && account.type == .totp {
                         let next = account.nextCode()
                         if !next.isEmpty {
-                            Text("下周期: \(next)")
+                            Text("下周期:\u{00A0}\(next)")
                                 .font(.system(size: 10, design: .monospaced))
                                 .foregroundColor(.secondary.opacity(0.8))
+                                .lineLimit(1)
+                                .fixedSize(horizontal: true, vertical: false)
                         }
                     }
                 }

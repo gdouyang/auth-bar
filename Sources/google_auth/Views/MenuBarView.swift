@@ -38,7 +38,7 @@ public struct MenuBarView: View {
             // Bottom bar / Toast
             bottomStatusBar
         }
-        .frame(width: 360, height: 480)
+        .frame(width: 380, height: 490)
         .background(Color(NSColor.windowBackgroundColor))
         .sheet(isPresented: $showingAddSheet) {
             AddAccountSheet(accountManager: accountManager)
