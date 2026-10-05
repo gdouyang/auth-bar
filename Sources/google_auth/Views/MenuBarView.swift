@@ -90,6 +90,19 @@ public struct MenuBarView: View {
 
             Spacer()
 
+            // Quick import from clipboard
+            Button(action: {
+                let res = accountManager.importFromClipboard()
+                if let err = res.error {
+                    accountManager.showToast(err)
+                }
+            }) {
+                Image(systemName: "doc.on.clipboard")
+                    .font(.system(size: 13))
+            }
+            .buttonStyle(.plain)
+            .help("从剪贴板导入")
+
             // Quick scan screen button
             Button(action: {
                 let res = accountManager.importFromScreenQR()
@@ -218,6 +231,20 @@ public struct MenuBarView: View {
 
             VStack(spacing: 8) {
                 Button(action: {
+                    let res = accountManager.importFromClipboard()
+                    if let err = res.error {
+                        accountManager.showToast(err)
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "doc.on.clipboard")
+                        Text("从剪贴板读取并导入")
+                    }
+                    .frame(maxWidth: 220)
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button(action: {
                     let res = accountManager.importFromScreenQR()
                     if let err = res.error {
                         accountManager.showToast(err)
@@ -229,7 +256,7 @@ public struct MenuBarView: View {
                     }
                     .frame(maxWidth: 220)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.bordered)
 
                 Button(action: { showingAddSheet = true }) {
                     HStack {

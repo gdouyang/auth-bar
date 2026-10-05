@@ -221,6 +221,53 @@ public final class AccountManager: ObservableObject {
         }
     }
 
+    @discardableResult
+    public func importFromClipboard() -> (count: Int, error: String?) {
+        guard let text = NSPasteboard.general.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !text.isEmpty else {
+            return (0, "剪贴板为空")
+        }
+        return smartImport(text: text)
+    }
+
+    public func smartImport(text: String) -> (count: Int, error: String?) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if GoogleMigrationDecoder.isMigrationURL(trimmed) {
+            let count = importFromURLString(trimmed)
+            if count > 0 {
+                return (count, nil)
+            }
+            return (0, "未能从 Google 迁移链接解析出账户")
+        }
+
+        if trimmed.lowercased().hasPrefix("otpauth://") {
+            let count = importFromURLString(trimmed)
+            if count > 0 {
+                return (count, nil)
+            }
+            return (0, "未能解析 otpauth:// 链接，请检查格式")
+        }
+
+        let cleaned = trimmed
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "-", with: "")
+            .replacingOccurrences(of: "=", with: "")
+            .uppercased()
+
+        if cleaned.count >= 8, let data = Base32.decode(cleaned), !data.isEmpty {
+            let item = AccountItem(
+                accountName: "新账户",
+                issuer: "",
+                secret: cleaned
+            )
+            addAccount(item)
+            return (1, nil)
+        }
+
+        return (0, "无法识别剪贴板内容（需要有效的密钥或 otpauth 链接）")
+    }
+
     public func exportJSON() -> String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]

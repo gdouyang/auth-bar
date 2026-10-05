@@ -7,7 +7,7 @@ public struct AddAccountSheet: View {
 
     @State private var selectedTab = 0
 
-    // Manual tab
+    // Manual / Smart input tab
     @State private var accountName = ""
     @State private var issuer = ""
     @State private var secretKey = ""
@@ -19,16 +19,32 @@ public struct AddAccountSheet: View {
     // URI Tab
     @State private var uriInput = ""
     @State private var errorMessage: String? = nil
+    @State private var clipboardPreview: String? = nil
 
     public init(accountManager: AccountManager) {
         self.accountManager = accountManager
+    }
+
+    private var cleanedSecret: String {
+        secretKey
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "-", with: "")
+            .replacingOccurrences(of: "=", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .uppercased()
+    }
+
+    private var isSecretValid: Bool {
+        guard !cleanedSecret.isEmpty else { return false }
+        guard let data = Base32.decode(cleanedSecret) else { return false }
+        return !data.isEmpty
     }
 
     public var body: some View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                Text("添加验证账户")
+                Text("添加双重验证账户")
                     .font(.headline)
                 Spacer()
                 Button(action: { dismiss() }) {
@@ -41,22 +57,45 @@ public struct AddAccountSheet: View {
             .padding()
 
             Picker("", selection: $selectedTab) {
-                Text("识别二维码").tag(0)
-                Text("手动输入").tag(1)
+                Text("手动 / 粘贴密钥").tag(0)
+                Text("识别二维码").tag(1)
                 Text("导入 URI").tag(2)
             }
             .pickerStyle(.segmented)
             .padding(.horizontal)
-            .padding(.bottom, 12)
+            .padding(.bottom, 10)
+
+            // Clipboard Quick Import Banner
+            if let preview = clipboardPreview {
+                HStack(spacing: 8) {
+                    Image(systemName: "doc.on.clipboard.fill")
+                        .foregroundColor(.accentColor)
+                    Text("剪贴板检测到: \(preview)")
+                        .font(.caption)
+                        .lineLimit(1)
+                    Spacer()
+                    Button("填入") {
+                        autoFillFromClipboard()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color.accentColor.opacity(0.1))
+                .cornerRadius(6)
+                .padding(.horizontal)
+                .padding(.bottom, 6)
+            }
 
             Divider()
 
             ScrollView {
                 VStack(spacing: 16) {
                     if selectedTab == 0 {
-                        qrScanTab
-                    } else if selectedTab == 1 {
                         manualEntryTab
+                    } else if selectedTab == 1 {
+                        qrScanTab
                     } else {
                         uriImportTab
                     }
@@ -86,12 +125,12 @@ public struct AddAccountSheet: View {
 
                 Spacer()
 
-                if selectedTab == 1 {
+                if selectedTab == 0 {
                     Button("添加账户") {
                         saveManualAccount()
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(secretKey.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(!isSecretValid)
                 } else if selectedTab == 2 {
                     Button("解析并导入") {
                         importURI()
@@ -102,10 +141,131 @@ public struct AddAccountSheet: View {
             }
             .padding()
         }
-        .frame(width: 440, height: 420)
+        .frame(width: 450, height: 460)
+        .onAppear {
+            checkClipboard()
+        }
     }
 
     // MARK: - Subviews
+
+    private var manualEntryTab: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            // Secret Key input with Paste button
+            VStack(alignment: .leading, spacing: 5) {
+                HStack {
+                    Text("密钥 (Secret Key) *")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+
+                    Spacer()
+
+                    Button(action: pasteSecretFromClipboard) {
+                        HStack(spacing: 3) {
+                            Image(systemName: "doc.on.clipboard")
+                            Text("从剪贴板粘贴")
+                        }
+                        .font(.caption)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                }
+
+                HStack {
+                    TextField("例如: JBSWY3DPEHPK3PXP 或直接粘贴 otpauth://", text: $secretKey)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(.body, design: .monospaced))
+                        .onChange(of: secretKey) { _, newValue in
+                            handleSecretChanged(newValue)
+                        }
+
+                    if !secretKey.isEmpty {
+                        Button(action: { secretKey = "" }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
+                // Validation status indicator
+                if !secretKey.isEmpty {
+                    if isSecretValid {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            Text("Base32 格式正确")
+                                .foregroundColor(.green)
+                        }
+                        .font(.caption)
+                    } else {
+                        HStack(spacing: 4) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.orange)
+                            Text("格式有误：Base32 由 A-Z 及 2-7 组成，不含 0, 1, 8, 9")
+                                .foregroundColor(.orange)
+                        }
+                        .font(.caption)
+                    }
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("服务商 / 发行方 (Issuer)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                TextField("例如: Google, GitHub, AWS, 微软", text: $issuer)
+                    .textFieldStyle(.roundedBorder)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("账户名称 / 邮箱 (Account)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                TextField("例如: yourname@gmail.com", text: $accountName)
+                    .textFieldStyle(.roundedBorder)
+            }
+
+            HStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("类型")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Picker("", selection: $type) {
+                        Text("基于时间 (TOTP)").tag(OTPType.totp)
+                        Text("基于计数 (HOTP)").tag(OTPType.hotp)
+                    }
+                    .labelsHidden()
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("位数")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Picker("", selection: $digits) {
+                        Text("6 位").tag(6)
+                        Text("8 位").tag(8)
+                    }
+                    .labelsHidden()
+                    .frame(width: 80)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("算法")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Picker("", selection: $algorithm) {
+                        Text("SHA1").tag(OTPAlgorithm.sha1)
+                        Text("SHA256").tag(OTPAlgorithm.sha256)
+                        Text("SHA512").tag(OTPAlgorithm.sha512)
+                    }
+                    .labelsHidden()
+                    .frame(width: 90)
+                }
+            }
+        }
+    }
 
     private var qrScanTab: some View {
         VStack(spacing: 20) {
@@ -149,73 +309,6 @@ public struct AddAccountSheet: View {
         }
     }
 
-    private var manualEntryTab: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("服务商 / 发行方 (Issuer)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                TextField("例如: Google, GitHub, AWS", text: $issuer)
-                    .textFieldStyle(.roundedBorder)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text("账户名称 / 邮箱 (Account)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                TextField("例如: yourname@gmail.com", text: $accountName)
-                    .textFieldStyle(.roundedBorder)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text("密钥 (Secret Key)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                TextField("Base32 格式，例如: JBSWY3DPEHPK3PXP", text: $secretKey)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.system(.body, design: .monospaced))
-            }
-
-            HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("类型")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Picker("", selection: $type) {
-                        Text("基于时间 (TOTP)").tag(OTPType.totp)
-                        Text("基于计数 (HOTP)").tag(OTPType.hotp)
-                    }
-                    .labelsHidden()
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("位数")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Picker("", selection: $digits) {
-                        Text("6 位").tag(6)
-                        Text("8 位").tag(8)
-                    }
-                    .labelsHidden()
-                    .frame(width: 80)
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("算法")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Picker("", selection: $algorithm) {
-                        Text("SHA1").tag(OTPAlgorithm.sha1)
-                        Text("SHA256").tag(OTPAlgorithm.sha256)
-                        Text("SHA512").tag(OTPAlgorithm.sha512)
-                    }
-                    .labelsHidden()
-                    .frame(width: 90)
-                }
-            }
-        }
-    }
-
     private var uriImportTab: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("粘贴 otpauth:// 或 otpauth-migration:// 链接:")
@@ -235,7 +328,8 @@ public struct AddAccountSheet: View {
                         uriInput = text
                     }
                 }
-                .buttonStyle(.link)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
 
                 Spacer()
             }
@@ -243,6 +337,94 @@ public struct AddAccountSheet: View {
     }
 
     // MARK: - Actions
+
+    private func checkClipboard() {
+        guard let text = NSPasteboard.general.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !text.isEmpty else {
+            return
+        }
+
+        if text.lowercased().hasPrefix("otpauth://") {
+            clipboardPreview = "otpauth 链接"
+        } else if GoogleMigrationDecoder.isMigrationURL(text) {
+            clipboardPreview = "Google 迁移码"
+        } else {
+            let cleaned = text.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: "")
+            if cleaned.count >= 8 && Base32.decode(cleaned) != nil {
+                clipboardPreview = "密钥: \(cleaned.prefix(6))..."
+            }
+        }
+    }
+
+    private func autoFillFromClipboard() {
+        guard let text = NSPasteboard.general.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !text.isEmpty else { return }
+
+        // If it's a migration URL
+        if GoogleMigrationDecoder.isMigrationURL(text) {
+            let count = accountManager.importFromURLString(text)
+            if count > 0 {
+                dismiss()
+                return
+            }
+        }
+
+        // If it's an otpauth:// URL
+        if let parsed = OTPAuthURL.parse(text) {
+            fillFromParsed(parsed)
+            return
+        }
+
+        // If it's a raw secret
+        let cleaned = text.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: "")
+        if cleaned.count >= 8 && Base32.decode(cleaned) != nil {
+            self.secretKey = cleaned
+            if self.accountName.isEmpty {
+                self.accountName = "新账户"
+            }
+        }
+    }
+
+    private func pasteSecretFromClipboard() {
+        guard let text = NSPasteboard.general.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !text.isEmpty else {
+            errorMessage = "剪贴板为空"
+            return
+        }
+        handleSecretChanged(text)
+    }
+
+    private func handleSecretChanged(_ input: String) {
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // If user pasted an otpauth:// URL into the secret field, auto parse all fields!
+        if trimmed.lowercased().hasPrefix("otpauth://"), let parsed = OTPAuthURL.parse(trimmed) {
+            fillFromParsed(parsed)
+            return
+        }
+
+        // If user pasted otpauth-migration://
+        if GoogleMigrationDecoder.isMigrationURL(trimmed) {
+            let count = accountManager.importFromURLString(trimmed)
+            if count > 0 {
+                dismiss()
+                return
+            }
+        }
+
+        self.secretKey = trimmed
+    }
+
+    private func fillFromParsed(_ parsed: OTPAuthParsedData) {
+        self.secretKey = parsed.secret
+        self.issuer = parsed.issuer
+        self.accountName = parsed.accountName
+        self.type = parsed.type
+        self.algorithm = parsed.algorithm
+        self.digits = parsed.digits
+        self.period = parsed.period
+        self.errorMessage = nil
+    }
 
     private func scanScreen() {
         errorMessage = nil
@@ -274,15 +456,21 @@ public struct AddAccountSheet: View {
 
     private func saveManualAccount() {
         errorMessage = nil
-        let cleanedSecret = secretKey.replacingOccurrences(of: " ", with: "")
-        guard Base32.decode(cleanedSecret) != nil else {
+        guard isSecretValid else {
             errorMessage = "密钥不是有效的 Base32 编码，请检查"
             return
         }
 
+        var finalName = accountName.trimmingCharacters(in: .whitespaces)
+        let finalIssuer = issuer.trimmingCharacters(in: .whitespaces)
+
+        if finalName.isEmpty {
+            finalName = !finalIssuer.isEmpty ? finalIssuer : "我的验证账户"
+        }
+
         let item = AccountItem(
-            accountName: accountName.trimmingCharacters(in: .whitespaces),
-            issuer: issuer.trimmingCharacters(in: .whitespaces),
+            accountName: finalName,
+            issuer: finalIssuer,
             secret: cleanedSecret,
             algorithm: algorithm,
             digits: digits,

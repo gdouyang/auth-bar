@@ -19,9 +19,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Run as menu bar accessory app
         NSApp.setActivationPolicy(.accessory)
 
+        setupMainMenu()
         setupPopover()
         setupStatusItem()
         setupEventMonitor()
+    }
+
+    /// Essential for macOS accessory apps: enables Cmd+C, Cmd+V, Cmd+X, Cmd+A, Cmd+Z shortcuts
+    private func setupMainMenu() {
+        let mainMenu = NSMenu()
+
+        // Application menu
+        let appMenuItem = NSMenuItem()
+        let appMenu = NSMenu()
+        appMenu.addItem(withTitle: "关于 Google Authenticator", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        appMenu.addItem(.separator())
+        appMenu.addItem(withTitle: "退出", action: #selector(quitApp), keyEquivalent: "q")
+        appMenuItem.submenu = appMenu
+        mainMenu.addItem(appMenuItem)
+
+        // Edit menu
+        let editMenuItem = NSMenuItem()
+        let editMenu = NSMenu(title: "Edit")
+        editMenu.addItem(withTitle: "撤销", action: Selector(("undo:")), keyEquivalent: "z")
+        editMenu.addItem(withTitle: "重做", action: Selector(("redo:")), keyEquivalent: "Z")
+        editMenu.addItem(.separator())
+        editMenu.addItem(withTitle: "剪切", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: "拷贝", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: "粘贴", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: "全选", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        editMenuItem.submenu = editMenu
+        mainMenu.addItem(editMenuItem)
+
+        NSApp.mainMenu = mainMenu
     }
 
     private func setupPopover() {
@@ -80,7 +110,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let popover = popover else { return }
         NSApp.activate(ignoringOtherApps: true)
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-        popover.contentViewController?.view.window?.makeKey()
+        if let window = popover.contentViewController?.view.window {
+            window.makeKeyAndOrderFront(nil)
+        }
     }
 
     private func closePopover() {
@@ -91,9 +123,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
 
         menu.addItem(NSMenuItem(title: "打开身份验证器", action: #selector(openFromMenu), keyEquivalent: "o"))
-
-        let scanItem = NSMenuItem(title: "一键识别屏幕二维码", action: #selector(scanScreenFromMenu), keyEquivalent: "s")
-        menu.addItem(scanItem)
+        menu.addItem(NSMenuItem(title: "从剪贴板导入", action: #selector(importFromClipboardFromMenu), keyEquivalent: "v"))
+        menu.addItem(NSMenuItem(title: "一键识别屏幕二维码", action: #selector(scanScreenFromMenu), keyEquivalent: "s"))
 
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "退出", action: #selector(quitApp), keyEquivalent: "q"))
@@ -104,6 +135,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openFromMenu() {
+        if let button = statusItem?.button {
+            showPopover(button)
+        }
+    }
+
+    @objc private func importFromClipboardFromMenu() {
+        let result = AccountManager.shared.importFromClipboard()
+        if let err = result.error {
+            AccountManager.shared.showToast(err)
+        }
         if let button = statusItem?.button {
             showPopover(button)
         }
