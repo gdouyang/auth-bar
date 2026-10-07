@@ -4,10 +4,10 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 cd "$DIR"
 
-echo "==> Building Google Authenticator for Mac (Release mode)..."
+echo "==> Building AuthBar for Mac (Release mode)..."
 swift build -c release
 
-APP_NAME="Google Authenticator"
+APP_NAME="AuthBar"
 BUNDLE_DIR="$DIR/$APP_NAME.app"
 CONTENTS_DIR="$BUNDLE_DIR/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
@@ -19,7 +19,7 @@ mkdir -p "$MACOS_DIR"
 mkdir -p "$RESOURCES_DIR"
 
 # Copy binary
-cp "$DIR/.build/release/GoogleAuthenticatorMac" "$MACOS_DIR/$APP_NAME"
+cp "$DIR/.build/release/AuthBar" "$MACOS_DIR/$APP_NAME"
 
 # Copy AppIcon if exists
 if [ -f "$DIR/AppIcon.icns" ]; then
@@ -39,7 +39,7 @@ cat <<EOF > "$CONTENTS_DIR/Info.plist"
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
-    <string>com.googleauth.mac</string>
+    <string>com.authbar.mac</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>

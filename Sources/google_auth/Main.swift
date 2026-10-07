@@ -32,7 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Application menu
         let appMenuItem = NSMenuItem()
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: "关于 Google Authenticator", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        appMenu.addItem(withTitle: "关于 AuthBar", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "退出", action: #selector(quitApp), keyEquivalent: "q")
         appMenuItem.submenu = appMenu
@@ -68,7 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = item.button {
-            if let image = NSImage(systemSymbolName: "shield.lefthalf.filled", accessibilityDescription: "Google Authenticator") {
+            if let image = NSImage(systemSymbolName: "shield.lefthalf.filled", accessibilityDescription: "AuthBar") {
                 image.isTemplate = true
                 button.image = image
             } else {

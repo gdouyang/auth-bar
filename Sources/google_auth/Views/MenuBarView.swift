@@ -85,8 +85,8 @@ public struct MenuBarView: View {
                 .font(.system(size: 17, weight: .bold))
                 .foregroundColor(.accentColor)
 
-            Text("身份验证器")
-                .font(.system(size: 14, weight: .bold))
+            Text("AuthBar")
+                .font(.system(size: 15, weight: .bold))
 
             Spacer()
 

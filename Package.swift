@@ -2,23 +2,23 @@
 import PackageDescription
 
 let package = Package(
-    name: "GoogleAuthenticatorMac",
+    name: "AuthBar",
     platforms: [
         .macOS(.v14)
     ],
     products: [
-        .executable(name: "GoogleAuthenticatorMac", targets: ["GoogleAuthenticatorMac"])
+        .executable(name: "AuthBar", targets: ["AuthBar"])
     ],
     dependencies: [],
     targets: [
         .executableTarget(
-            name: "GoogleAuthenticatorMac",
+            name: "AuthBar",
             dependencies: [],
             path: "Sources/google_auth"
         ),
         .testTarget(
-            name: "GoogleAuthenticatorMacTests",
-            dependencies: ["GoogleAuthenticatorMac"],
+            name: "AuthBarTests",
+            dependencies: ["AuthBar"],
             path: "Tests/google_authTests"
         ),
     ]

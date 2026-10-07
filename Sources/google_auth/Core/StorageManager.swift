@@ -17,9 +17,16 @@ public final class StorageManager {
 
     private init() {
         if let baseDir = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
-            self.appSupportDirectory = baseDir.appendingPathComponent("GoogleAuthenticatorMac", isDirectory: true)
+            let newDir = baseDir.appendingPathComponent("AuthBar", isDirectory: true)
+            let oldDir = baseDir.appendingPathComponent("GoogleAuthenticatorMac", isDirectory: true)
+
+            // Migrate existing data from old directory if present
+            if fileManager.fileExists(atPath: oldDir.path) && !fileManager.fileExists(atPath: newDir.path) {
+                try? fileManager.copyItem(at: oldDir, to: newDir)
+            }
+            self.appSupportDirectory = newDir
         } else {
-            self.appSupportDirectory = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".google_authenticator_mac")
+            self.appSupportDirectory = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".authbar")
         }
 
         try? fileManager.createDirectory(at: appSupportDirectory, withIntermediateDirectories: true, attributes: [

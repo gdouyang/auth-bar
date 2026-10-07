@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import GoogleAuthenticatorMac
+@testable import AuthBar
 
 @Suite("Base32 Tests")
 struct Base32Tests {

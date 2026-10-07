@@ -1,17 +1,18 @@
-# Google Authenticator for Mac (macOS 原生身份验证器)
+# AuthBar for Mac (macOS 原生菜单栏身份验证器)
 
-专为 macOS 设计的轻量、原生 Google Authenticator（双重认证 / 2FA）客户端。驻留在 macOS 顶部菜单栏，随时快捷获取动态验证码。
+**AuthBar** 是一款专为 macOS 设计的轻量、现代化双重认证（2FA / TOTP）工具。它常驻在屏幕顶部的系统菜单栏，随时随地一键复制动态验证码。
 
 ---
 
 ## ✨ 核心特性
 
-- 🚀 **macOS 原生体验**：基于 Swift 6 + SwiftUI + AppKit 开发，超轻量（不到 2MB），秒开且极省内存。
-- 📌 **常驻顶部菜单栏**：点击菜单栏盾牌图标随时展开面板，不占用 Dock 栏。
-- 🔍 **屏幕二维码一键识别**：网页上开启 2FA 出现二维码时，点击「一键识别屏幕二维码」，免手机扫码直接导入！
+- 🚀 **极简 Mac 原生体验**：基于 Swift 6 + SwiftUI + AppKit 开发，超轻量，秒开且极度省电省内存。
+- 📌 **常驻顶部菜单栏**：点击菜单栏盾牌图标随时展开面板，不占用 Dock 栏空间。
+- 🔍 **屏幕二维码一键识别**：网页上开启 2FA 出现二维码时，点击「一键识别屏幕二维码」，免掏手机扫码直接抓取导入！
+- 📋 **智能剪贴板感知**：支持 `Cmd+V` 快速粘贴，支持一键从剪贴板自动解析并填入密钥或 `otpauth://` 链接。
 - 📲 **支持 Google 迁移码导入**：完整支持 Google Authenticator 手机端「转移账户」导出的二维码格式（`otpauth-migration://` Protobuf 解码）。
 - ⏱️ **平滑倒计时进度环**：30 秒精准倒计时动画，剩余时间小于 8 秒橙色预警、小于 4 秒红色告警。
-- 📋 **一键复制与快捷操作**：单机验证码或复制按钮直接拷贝并展示反馈动画；支持复制后自动收起弹窗。
+- 📋 **一键复制与快捷操作**：单击验证码或复制按钮直接拷贝并展示反馈动画；支持复制后自动收起弹窗。
 - 🔎 **实时搜索与置顶**：支持按服务商（Issuer）或账户名快速过滤，支持将常用账户置顶。
 - 🔒 **Touch ID / 密码安全锁定**：支持调用 macOS 系统的 Touch ID 指纹或锁屏密码解锁，防止他人窥视。
 - 💾 **数据备份与恢复**：支持一键导出与导入标准 JSON 格式数据。
@@ -24,7 +25,7 @@
 ```
 google_auth/
 ├── Package.swift                    # Swift Package Manager 配置
-├── Google Authenticator.app        # 已打包好的 macOS 应用程序
+├── AuthBar.app                      # 已打包好的 macOS 应用程序
 ├── Sources/
 │   └── google_auth/
 │       ├── Main.swift              # 程序入口与 NSStatusBar 菜单栏挂载
@@ -69,17 +70,17 @@ swift test
 ```bash
 ./scripts/build_app.sh
 ```
-打包成功后，将在当前目录生成 `Google Authenticator.app`。
+打包成功后，将在当前目录生成 `AuthBar.app`。
 
 ### 3. 安装到系统应用程序
-你可以直接将生成的 `Google Authenticator.app` 拖入 `/Applications`（应用程序）目录中：
+你可以直接将生成的 `AuthBar.app` 拖入 `/Applications`（应用程序）目录中：
 ```bash
-cp -R "Google Authenticator.app" /Applications/
+cp -R "AuthBar.app" /Applications/
 ```
 
 ### 4. 启动应用
 ```bash
-open "Google Authenticator.app"
+open "AuthBar.app"
 ```
 启动后，macOS 顶部菜单栏右上角将出现一个蓝白色盾牌图标。
 
@@ -89,6 +90,7 @@ open "Google Authenticator.app"
 
 1. **添加双重认证账户**：
    - **屏幕一键扫码**：在浏览器打开包含 2FA 二维码的网页，点击菜单栏应用右上角的 `[扫码]` 按钮，即可自动从屏幕中捕获并识别添加。
+   - **剪贴板智能添加**：复制密钥后，点击 `[剪贴板]` 图标或在添加界面点击「从剪贴板粘贴」，程序会自动识别并填入。
    - **手机迁移**：在手机端 Google Authenticator 中选择「转移账户 -> 导出账户」，把生成的二维码截图或显示在屏幕上，点击屏幕识别或选择图片即可一次性导入所有账户。
    - **手动添加**：点击 `[+]` 按钮，选择「手动输入」录入密钥（Secret Key）。
    - **URI 导入**：支持粘贴标准的 `otpauth://...` 链接。

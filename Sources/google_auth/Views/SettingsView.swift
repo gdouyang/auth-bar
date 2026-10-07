@@ -94,7 +94,7 @@ public struct SettingsView: View {
             Divider()
 
             HStack {
-                Text("Google Authenticator for Mac v1.0.0")
+                Text("AuthBar for Mac v1.0.0")
                     .font(.footnote)
                     .foregroundColor(.secondary)
                 Spacer()

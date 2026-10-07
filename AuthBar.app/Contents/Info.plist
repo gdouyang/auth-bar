@@ -5,17 +5,17 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>zh_CN</string>
     <key>CFBundleExecutable</key>
-    <string>Google Authenticator</string>
+    <string>AuthBar</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
-    <string>com.googleauth.mac</string>
+    <string>com.authbar.mac</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>Google Authenticator</string>
+    <string>AuthBar</string>
     <key>CFBundleDisplayName</key>
-    <string>Google Authenticator</string>
+    <string>AuthBar</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
