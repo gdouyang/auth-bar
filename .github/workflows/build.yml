@@ -23,10 +23,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Select Xcode
+      - name: Select Xcode 16
         run: |
-          echo "Installed Xcode versions:"
-          ls -d /Applications/Xcode* || true
+          XCODE_16=$(find /Applications -maxdepth 1 -name "Xcode_16*.app" | sort -V | tail -n 1)
+          if [ -n "$XCODE_16" ]; then
+            echo "Switching to: $XCODE_16"
+            sudo xcode-select -s "$XCODE_16/Contents/Developer"
+          fi
           xcodebuild -version
           swift --version
 
