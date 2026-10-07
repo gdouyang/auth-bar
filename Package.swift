@@ -14,12 +14,12 @@ let package = Package(
         .executableTarget(
             name: "AuthBar",
             dependencies: [],
-            path: "Sources/google_auth"
+            path: "Sources/AuthBar"
         ),
         .testTarget(
             name: "AuthBarTests",
             dependencies: ["AuthBar"],
-            path: "Tests/google_authTests"
+            path: "Tests/AuthBarTests"
         ),
     ]
 )

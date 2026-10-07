@@ -23,11 +23,11 @@
 ## 🏗️ 目录结构
 
 ```
-google_auth/
+auth-bar/
 ├── Package.swift                    # Swift Package Manager 配置
 ├── AuthBar.app                      # 已打包好的 macOS 应用程序
 ├── Sources/
-│   └── google_auth/
+│   └── AuthBar/
 │       ├── Main.swift              # 程序入口与 NSStatusBar 菜单栏挂载
 │       ├── Core/
 │       │   ├── Base32.swift        # RFC 4648 Base32 编解码
@@ -53,8 +53,8 @@ google_auth/
 │   ├── build_app.sh                # 编译 Release 并打包 .app 脚本
 │   └── create_icon.swift           # 原生 App 图标生成脚本
 └── Tests/
-    └── google_authTests/
-        └── google_authTests.swift  # RFC 测试向量与单元测试
+    └── AuthBarTests/
+        └── AuthBarTests.swift      # RFC 测试向量与单元测试
 ```
 
 ---
